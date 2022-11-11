@@ -4,66 +4,57 @@
 #include <lv2.h>
 
 
-#include <rubberband/RubberBandStretcher.h>
-
-struct stereo {
-    RubberBand::RubberBandStretcher *stretcher;
-    float buffer[1024];
-    float *buffer_head;
-    float *buffer_tail;
+struct dynamics {
     float *ports[5];
+    float abs1;
+    float abs2;
+    float samplerate;
 };
 
 static LV2_Handle instantiate(const LV2_Descriptor *descriptor, double sample_rate, const char *bundle_path, const LV2_Feature *const *features)
 {
-    stereo *instance = new stereo;
-    instance->stretcher = new RubberBand::RubberBandStretcher(sample_rate, 1, RubberBand::RubberBandStretcher::OptionProcessRealTime | RubberBand::RubberBandStretcher::OptionEngineFaster, 2.0, 1.0);
-    instance->stretcher->setMaxProcessSize(8);
-    size_t startPad = instance->stretcher->getPreferredStartPad();
-    std::cout << "startPad: " << startPad << "\n";
-    for (size_t index = 0; index < startPad; ++index) {
-        float *f = new float[1]; f[0] = 0;
-        instance->stretcher->process(&f, 0, false);
-        delete  []f;
-    }
-    
-    std::cout << "available: " << instance->stretcher->available() << "\n";
-
-    std::cout << "required: " << instance->stretcher->getSamplesRequired() << "\n";
-    instance->buffer_head = instance->buffer;
-    instance->buffer_tail = instance->buffer;
+    dynamics *instance = new dynamics;
+    instance->samplerate = sample_rate;
+    instance->abs1 = 0;
+    instance->abs2 = 0;
     return (LV2_Handle)(instance);
 }
 
 static void cleanup(LV2_Handle instance)
 {
-    stereo *tinstance = (stereo*)instance;
-    delete tinstance->stretcher;
+    dynamics *tinstance = (dynamics*)instance;
     delete tinstance;
 }
 
 static void connect_port(LV2_Handle instance, uint32_t port, void *data_location)
 {
-    ((stereo*)instance)->ports[port] = (float*)data_location;
+    ((dynamics*)instance)->ports[port] = (float*)data_location;
 }
 
 static void run(LV2_Handle instance, uint32_t sample_count)
 {
-    stereo *tinstance = (stereo*)(instance);
+    dynamics *tinstance = (dynamics*)(instance);
 
-    const float max_delay = tinstance->ports[3][0];
+    const float t1 = tinstance->ports[2][0];
+    const float t2 = tinstance->ports[3][0];
+    const float strength = tinstance->ports[4][0];
+
+    const float a1 = 1.0f - expf((-1.0f/tinstance->samplerate) / t1);
+    const float a2 = 1.0f - expf((-1.0f/tinstance->samplerate) / t2);
 
     for(uint32_t sample_index = 0; sample_index < sample_count; ++sample_index)
     {
-        // Just copy the left channel
-        tinstance->ports[1][sample_index] = tinstance->ports[0][sample_index];
+        tinstance->abs1 = a1 * fabs(tinstance->ports[0][sample_index]) + (1.0f - a1) * tinstance->abs1;
+        tinstance->abs2 = a2 * fabs(tinstance->ports[0][sample_index]) + (1.0f - a2) * tinstance->abs2;
 
-        
+        const float r = tinstance->abs1 / tinstance->abs2;
+        // Just copy the left channel
+        tinstance->ports[1][sample_index] = (1.0f / r) * tinstance->ports[0][sample_index];
     }
 }
 
 static const LV2_Descriptor descriptor = {
-    "http://fps.io/plugins/stereofication",
+    "http://fps.io/plugins/relative_compressor",
     instantiate,
     connect_port,
     nullptr, // activate
