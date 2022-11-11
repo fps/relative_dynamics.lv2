@@ -35,8 +35,8 @@ static void run(LV2_Handle instance, uint32_t sample_count)
 {
     dynamics *tinstance = (dynamics*)(instance);
 
-    const float t1 = tinstance->ports[2][0];
-    const float t2 = tinstance->ports[3][0];
+    const float t1 = tinstance->ports[2][0] / 1000.0f;
+    const float t2 = tinstance->ports[3][0] / 1000.0f;
     const float strength = tinstance->ports[4][0];
 
     const float a1 = 1.0f - expf((-1.0f/tinstance->samplerate) / t1);
