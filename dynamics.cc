@@ -48,8 +48,8 @@ static void run(LV2_Handle instance, uint32_t sample_count)
         tinstance->abs2 = a2 * fabs(tinstance->ports[0][sample_index]) + (1.0f - a2) * tinstance->abs2;
 
         const float r = tinstance->abs1 / tinstance->abs2;
-        // Just copy the left channel
-        tinstance->ports[1][sample_index] = (1.0f / r) * tinstance->ports[0][sample_index];
+
+        tinstance->ports[1][sample_index] = powf(1.0f / r, tinstance->ports[4][0]) * tinstance->ports[0][sample_index];
     }
 }
 
