@@ -31,6 +31,8 @@ static void connect_port(LV2_Handle instance, uint32_t port, void *data_location
     ((dynamics*)instance)->ports[port] = (float*)data_location;
 }
 
+#define EPSILON 0.0001f
+
 static void run(LV2_Handle instance, uint32_t sample_count)
 {
     dynamics *tinstance = (dynamics*)(instance);
@@ -47,7 +49,7 @@ static void run(LV2_Handle instance, uint32_t sample_count)
         tinstance->abs1 = a1 * fabs(tinstance->ports[0][sample_index]) + (1.0f - a1) * tinstance->abs1;
         tinstance->abs2 = a2 * fabs(tinstance->ports[0][sample_index]) + (1.0f - a2) * tinstance->abs2;
 
-        const float r = tinstance->abs1 / tinstance->abs2;
+        const float r = (EPSILON + tinstance->abs1) / (EPSILON + tinstance->abs2);
 
         tinstance->ports[1][sample_index] = powf(1.0f / r, tinstance->ports[4][0]) * tinstance->ports[0][sample_index];
     }
