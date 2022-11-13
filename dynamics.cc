@@ -6,7 +6,7 @@
 
 
 struct dynamics {
-    float *ports[7];
+    float *ports[8];
     float abs1;
     float abs2;
     float samplerate;
@@ -47,6 +47,7 @@ static void run(LV2_Handle instance, uint32_t sample_count)
     const float strength = tinstance->ports[4][0];
     const float delay = tinstance->ports[5][0];
     const float maxratio = tinstance->ports[6][0];
+    const float minratio = tinstance->ports[7][0];
 
     const float a1 = 1.0f - expf((-1.0f/tinstance->samplerate) / t1);
     const float a2 = 1.0f - expf((-1.0f/tinstance->samplerate) / t2);
@@ -63,6 +64,11 @@ static void run(LV2_Handle instance, uint32_t sample_count)
             scale = maxratio;
         }
 
+        if (scale < minratio) {
+            scale = minratio;
+        }
+
+
         tinstance->buffer[tinstance->buffer_head] = tinstance->ports[0][sample_index];
         
         int buffer_tail = tinstance->buffer_head - tinstance->samplerate * (delay / 1000);
@@ -77,7 +83,7 @@ static void run(LV2_Handle instance, uint32_t sample_count)
 }
 
 static const LV2_Descriptor descriptor = {
-    "http://fps.io/plugins/relative_compressor",
+    "http://fps.io/plugins/relative_dynamics",
     instantiate,
     connect_port,
     nullptr, // activate
