@@ -46,6 +46,7 @@ static void run(LV2_Handle instance, uint32_t sample_count)
     const float t2 = tinstance->ports[3][0] / 1000.0f;
     const float strength = tinstance->ports[4][0];
     const float delay = tinstance->ports[5][0];
+    const float maxratio = tinstance->ports[6][0];
 
     const float a1 = 1.0f - expf((-1.0f/tinstance->samplerate) / t1);
     const float a2 = 1.0f - expf((-1.0f/tinstance->samplerate) / t2);
@@ -56,7 +57,11 @@ static void run(LV2_Handle instance, uint32_t sample_count)
         tinstance->abs2 = a2 * fabs(tinstance->ports[0][sample_index]) + (1.0f - a2) * tinstance->abs2;
 
         const float r = (EPSILON + tinstance->abs1) / (EPSILON + tinstance->abs2);
-        const float scale = powf(1.0f / r, tinstance->ports[4][0]);
+        float scale = powf(1.0f / r, tinstance->ports[4][0]);
+
+        if (scale > maxratio) {
+            scale = maxratio;
+        }
 
         tinstance->buffer[tinstance->buffer_head] = tinstance->ports[0][sample_index];
         
