@@ -6,7 +6,7 @@
 
 
 struct dynamics {
-    float *ports[6];
+    float *ports[7];
     float abs1;
     float abs2;
     float samplerate;
