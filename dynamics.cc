@@ -60,7 +60,7 @@ static void run(LV2_Handle instance, uint32_t sample_count)
 
         tinstance->buffer[tinstance->buffer_head] = tinstance->ports[0][sample_index];
         
-        int buffer_tail = tinstance->buffer_head - tinstance->samplerate * delay;
+        int buffer_tail = tinstance->buffer_head - tinstance->samplerate * (delay / 1000);
         if (buffer_tail < 0) {
             buffer_tail += 2 * tinstance->samplerate;
         }
